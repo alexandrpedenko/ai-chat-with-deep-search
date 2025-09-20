@@ -1,0 +1,41 @@
+{
+    "name": "my-chat-app",
+    "version": "0.1.0",
+    "private": true,
+    "type": "module",
+    "scripts": {
+        "build": "next build",
+        "dev": "next dev",
+        "start": "next start",
+        "lint": "next lint",
+        "db:generate": "drizzle-kit generate",
+        "db:migrate": "drizzle-kit migrate",
+        "db:push": "drizzle-kit push",
+        "db:studio": "drizzle-kit studio"
+    },
+    "dependencies": {
+        "next": "^15.2.4",
+        "react": "^18.3.1",
+        "react-dom": "^18.3.1",
+        "@mui/material": "^6.1.6",
+        "@mui/icons-material": "^6.1.6",
+        "@emotion/react": "^11.13.3",
+        "@emotion/styled": "^11.13.0",
+        "@auth/drizzle-adapter": "^1.7.2",
+        "@t3-oss/env-nextjs": "^0.10.1",
+        "drizzle-orm": "^0.33.0",
+        "next-auth": "5.0.0-beta.25",
+        "postgres": "^3.4.4",
+        "zod": "^3.23.3"
+    },
+    "devDependencies": {
+        "@types/node": "^20.17.17",
+        "@types/react": "^18.3.18",
+        "@types/react-dom": "^18.3.1",
+        "eslint": "^8.57.0",
+        "eslint-config-next": "^15.0.1",
+        "prettier": "^3.3.2",
+        "typescript": "^5.8.2",
+        "drizzle-kit": "^0.24.0"
+    }
+}
