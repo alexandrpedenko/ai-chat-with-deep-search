@@ -5,32 +5,29 @@ import {
   TextField, 
   Button, 
   Stack,
-  Container
+  Container,
+  CircularProgress
 } from '@mui/material';
 import { Send as SendIcon } from '@mui/icons-material';
+import { useChat } from "@ai-sdk/react";
 import { ChatMessage } from "~/components/chat-message";
 
 interface ChatProps {
   userName: string;
 }
 
-const messages = [
-  {
-    id: "1",
-    content: "Hello, how are you?",
-    role: "user",
-  },
-  {
-    id: "2",
-    content: "I'm doing well, thank you! How can I help you today?",
-    role: "assistant",
-  },
-];
-
 export const ChatPage = ({ userName }: ChatProps) => {
-  const handleFormSubmit = (e: React.FormEvent) => {
+  const {
+    messages,
+    input,
+    handleInputChange,
+    handleSubmit,
+    isLoading,
+  } = useChat();
+
+  const handleFormSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
-    // TODO: Implement chat functionality
+    handleSubmit(e);
   };
 
   return (
@@ -52,14 +49,19 @@ export const ChatPage = ({ userName }: ChatProps) => {
       >
         <Container maxWidth="md" sx={{ flexGrow: 1 }}>
           <Stack spacing={3} sx={{ py: 2 }}>
-            {messages.map((message, index) => (
+            {messages.map((message) => (
               <ChatMessage
-                key={index}
+                key={message.id}
                 text={message.content}
                 role={message.role}
                 userName={userName}
               />
             ))}
+            {isLoading && (
+              <Box sx={{ display: 'flex', justifyContent: 'center', py: 2 }}>
+                <CircularProgress size={24} />
+              </Box>
+            )}
           </Stack>
         </Container>
       </Box>
@@ -86,6 +88,9 @@ export const ChatPage = ({ userName }: ChatProps) => {
               placeholder="Say something..."
               variant="outlined"
               size="small"
+              value={input}
+              onChange={handleInputChange}
+              disabled={isLoading}
               sx={{
                 '& .MuiOutlinedInput-root': {
                   backgroundColor: 'background.default',
@@ -97,6 +102,7 @@ export const ChatPage = ({ userName }: ChatProps) => {
               type="submit"
               variant="contained"
               endIcon={<SendIcon />}
+              disabled={isLoading}
               sx={{ 
                 minWidth: 'auto',
                 px: 2,
