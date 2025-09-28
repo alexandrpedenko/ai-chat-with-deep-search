@@ -39,7 +39,9 @@ export const users = createTable("user", {
 
 export const usersRelations = relations(users, ({ many }) => ({
   accounts: many(accounts),
+  sessions: many(sessions),
   chats: many(chats),
+  userRequests: many(userRequests),
 }));
 
 export const accounts = createTable(
@@ -170,6 +172,36 @@ export const messagesRelations = relations(messages, ({ one }) => ({
   chat: one(chats, { fields: [messages.chatId], references: [chats.id] }),
 }));
 
+// User requests table for rate limiting
+export const userRequests = createTable(
+  "user_request",
+  {
+    id: varchar("id", { length: 255 })
+      .notNull()
+      .primaryKey()
+      .$defaultFn(() => crypto.randomUUID()),
+    userId: varchar("user_id", { length: 255 })
+      .notNull()
+      .references(() => users.id),
+    requestType: varchar("request_type", { length: 50 }).notNull(), // 'chat', 'search', etc.
+    timestamp: timestamp("timestamp", {
+      mode: "date",
+      withTimezone: true,
+    }).default(sql`CURRENT_TIMESTAMP`),
+    ipAddress: varchar("ip_address", { length: 45 }), // IPv4 (15) or IPv6 (45) max
+    userAgent: text("user_agent"),
+  },
+  (userRequest) => ({
+    userIdIdx: index("user_request_user_id_idx").on(userRequest.userId),
+    timestampIdx: index("user_request_timestamp_idx").on(userRequest.timestamp),
+    userTypeIdx: index("user_request_user_type_idx").on(userRequest.userId, userRequest.requestType),
+  }),
+);
+
+export const userRequestsRelations = relations(userRequests, ({ one }) => ({
+  user: one(users, { fields: [userRequests.userId], references: [users.id] }),
+}));
+
 export declare namespace DB {
   export type User = InferSelectModel<typeof users>;
   export type NewUser = InferInsertModel<typeof users>;
@@ -190,4 +222,7 @@ export declare namespace DB {
 
   export type Message = InferSelectModel<typeof messages>;
   export type NewMessage = InferInsertModel<typeof messages>;
+
+  export type UserRequest = InferSelectModel<typeof userRequests>;
+  export type NewUserRequest = InferInsertModel<typeof userRequests>;
 }
