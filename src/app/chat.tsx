@@ -74,8 +74,7 @@ export const ChatPage = ({ userName }: ChatProps) => {
             {messages.map((message) => (
               <ChatMessage
                 key={message.id}
-                text={message.content}
-                role={message.role}
+                message={message as any}
                 userName={userName}
               />
             ))}
