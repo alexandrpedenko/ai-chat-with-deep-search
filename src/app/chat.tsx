@@ -6,10 +6,12 @@ import {
   Button, 
   Stack,
   Container,
-  CircularProgress
+  CircularProgress,
+  Alert
 } from '@mui/material';
 import { Send as SendIcon } from '@mui/icons-material';
 import { useChat } from "@ai-sdk/react";
+import { useSession } from "next-auth/react";
 import { ChatMessage } from "~/components/chat-message";
 
 interface ChatProps {
@@ -17,6 +19,7 @@ interface ChatProps {
 }
 
 export const ChatPage = ({ userName }: ChatProps) => {
+  const { data: session, status } = useSession();
   const {
     messages,
     input,
@@ -25,8 +28,17 @@ export const ChatPage = ({ userName }: ChatProps) => {
     isLoading,
   } = useChat();
 
+  const isAuthenticated = status === "authenticated" && session?.user;
+  const isAuthenticating = status === "loading";
+
   const handleFormSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
+    
+    if (!isAuthenticated) {
+      alert("Please sign in to send messages");
+      return;
+    }
+    
     handleSubmit(e);
   };
 
@@ -49,6 +61,16 @@ export const ChatPage = ({ userName }: ChatProps) => {
       >
         <Container maxWidth="md" sx={{ flexGrow: 1 }}>
           <Stack spacing={3} sx={{ py: 2 }}>
+            {!isAuthenticated && !isAuthenticating && (
+              <Alert severity="info" sx={{ mb: 2 }}>
+                Please sign in with GitHub to start chatting with the AI assistant.
+              </Alert>
+            )}
+            {isAuthenticating && (
+              <Alert severity="info" sx={{ mb: 2 }}>
+                Checking authentication status...
+              </Alert>
+            )}
             {messages.map((message) => (
               <ChatMessage
                 key={message.id}
@@ -85,24 +107,28 @@ export const ChatPage = ({ userName }: ChatProps) => {
               fullWidth
               multiline
               maxRows={4}
-              placeholder="Say something..."
+              placeholder={
+                !isAuthenticated 
+                  ? "Sign in to start chatting..." 
+                  : "Say something..."
+              }
               variant="outlined"
               size="small"
               value={input}
               onChange={handleInputChange}
-              disabled={isLoading}
+              disabled={isLoading || !isAuthenticated}
               sx={{
                 '& .MuiOutlinedInput-root': {
                   backgroundColor: 'background.default',
                 }
               }}
-              autoFocus
+              autoFocus={!!isAuthenticated}
             />
             <Button
               type="submit"
               variant="contained"
               endIcon={<SendIcon />}
-              disabled={isLoading}
+              disabled={isLoading || !isAuthenticated}
               sx={{ 
                 minWidth: 'auto',
                 px: 2,

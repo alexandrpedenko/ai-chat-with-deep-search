@@ -6,6 +6,7 @@ import {
   Stack
 } from '@mui/material';
 import { Person as PersonIcon, SmartToy as BotIcon } from '@mui/icons-material';
+import { Markdown } from './markdown';
 
 interface ChatMessageProps {
   text: string;
@@ -48,9 +49,12 @@ export const ChatMessage = ({ text, role, userName }: ChatMessageProps) => {
               maxWidth: '100%',
             }}
           >
-            <Typography variant="body1" sx={{ wordWrap: 'break-word' }}>
-              {text}
-            </Typography>
+            <Box sx={{ 
+              '& > *:first-of-type': { mt: 0 },
+              '& > *:last-child': { mb: 0 }
+            }}>
+              <Markdown>{text}</Markdown>
+            </Box>
           </Paper>
         </Stack>
       </Box>
