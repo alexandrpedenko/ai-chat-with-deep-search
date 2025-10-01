@@ -1,25 +1,10 @@
-'use client';
-
-import { ThemeProvider, createTheme } from '@mui/material/styles';
-import CssBaseline from '@mui/material/CssBaseline';
-import { SessionProvider } from 'next-auth/react';
 import "~/styles/globals.css";
+import { ClientProviders } from "./client-providers";
 
-const darkTheme = createTheme({
-  palette: {
-    mode: 'dark',
-    primary: {
-      main: '#1976d2',
-    },
-    secondary: {
-      main: '#dc004e',
-    },
-    background: {
-      default: '#121212',
-      paper: '#1e1e1e',
-    },
-  },
-});
+export const metadata = {
+  title: 'My Chat App',
+  description: 'AI-powered chat application with web search capabilities',
+};
 
 export default function RootLayout({
   children,
@@ -28,13 +13,10 @@ export default function RootLayout({
 }) {
   return (
     <html lang="en">
-      <body>
-        <SessionProvider>
-          <ThemeProvider theme={darkTheme}>
-            <CssBaseline />
-            {children}
-          </ThemeProvider>
-        </SessionProvider>
+      <body suppressHydrationWarning={true}>
+        <ClientProviders>
+          {children}
+        </ClientProviders>
       </body>
     </html>
   );

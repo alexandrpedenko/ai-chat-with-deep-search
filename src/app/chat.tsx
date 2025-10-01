@@ -13,10 +13,11 @@ import { Send as SendIcon } from '@mui/icons-material';
 import { useChat } from "@ai-sdk/react";
 import { useSession } from "next-auth/react";
 import { useRouter } from "next/navigation";
-import { useEffect } from "react";
+import { useEffect, useMemo } from "react";
 import type { Message } from "ai";
 import { ChatMessage } from "~/components/chat-message";
 import { isNewChatCreated } from "~/utils/chat";
+import { ScrollableChat } from "~/components/scrollable-chat";
 
 interface ChatProps {
   userName: string;
@@ -35,12 +36,14 @@ export const ChatPage = ({ userName, chatId, currentChat }: ChatProps) => {
   const { data: session, status } = useSession();
   const router = useRouter();
   
-  const initialMessages = (currentChat?.messages?.map((msg) => ({
-    id: msg.id,
-    role: msg.role as "user" | "assistant",
-    parts: msg.parts as any,
-    content: "",
-  })) || []) as Message[];
+  const initialMessages = useMemo(() => (
+    currentChat?.messages?.map((msg) => ({
+      id: msg.id,
+      role: msg.role as "user" | "assistant",
+      parts: msg.parts as any,
+      content: "",
+    })) || []
+  ), [currentChat?.messages]) as Message[];
   
   const {
     messages,
@@ -83,19 +86,13 @@ export const ChatPage = ({ userName, chatId, currentChat }: ChatProps) => {
     <Box sx={{ 
       display: 'flex', 
       flexDirection: 'column', 
-      height: '100%',
+      height: '100vh',
+      maxHeight: '100vh',
+      overflow: 'hidden',
       bgcolor: 'background.default'
     }}>
       {/* Messages Area */}
-      <Box
-        sx={{
-          flexGrow: 1,
-          overflowY: 'auto',
-          p: 2,
-          display: 'flex',
-          flexDirection: 'column',
-        }}
-      >
+      <ScrollableChat>
         <Container maxWidth="md" sx={{ flexGrow: 1 }}>
           <Stack spacing={3} sx={{ py: 2 }}>
             {!isAuthenticated && !isAuthenticating && (
@@ -122,11 +119,12 @@ export const ChatPage = ({ userName, chatId, currentChat }: ChatProps) => {
             )}
           </Stack>
         </Container>
-      </Box>
+      </ScrollableChat>
 
       {/* Input Area */}
       <Box
         sx={{
+          flexShrink: 0, // Prevent shrinking
           borderTop: 1,
           borderColor: 'divider',
           bgcolor: 'background.paper',

@@ -46,7 +46,7 @@ export async function POST(request: Request) {
         )
       );
 
-    const hourlyLimit = 1; // Adjust as needed
+    const hourlyLimit = 10; // Adjust as needed
     const currentCount = requestCount[0]?.count ?? 0;
     if (currentCount >= hourlyLimit) {
       return new Response(
