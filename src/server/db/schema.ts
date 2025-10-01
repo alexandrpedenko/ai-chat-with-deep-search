@@ -157,14 +157,12 @@ export const messages = createTable(
       .notNull()
       .references(() => chats.id),
     role: varchar("role", { length: 50 }).notNull(), // 'user' or 'assistant'
-    content: text("content").notNull(),
-    createdAt: timestamp("created_at", {
-      mode: "date",
-      withTimezone: true,
-    }).default(sql`CURRENT_TIMESTAMP`),
+    parts: json("parts"), // Store message parts as JSON
+    order: integer("order").notNull(), // Order of messages in the chat
   },
   (message) => ({
     chatIdIdx: index("message_chat_id_idx").on(message.chatId),
+    orderIdx: index("message_order_idx").on(message.chatId, message.order),
   }),
 );
 

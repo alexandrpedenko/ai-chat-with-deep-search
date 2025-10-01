@@ -9,14 +9,14 @@ export async function GET(
   { params }: { params: { chatId: string } }
 ) {
   const session = await auth();
-  
+
   if (!session?.user?.id) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
   try {
     const chatId = params.chatId;
-    
+
     // Verify chat belongs to user
     const chat = await db
       .select()
@@ -33,7 +33,7 @@ export async function GET(
       .select()
       .from(messages)
       .where(eq(messages.chatId, chatId))
-      .orderBy(messages.createdAt);
+      .orderBy(messages.order);
 
     return NextResponse.json({
       chat: chat[0],
@@ -50,7 +50,7 @@ export async function POST(
   { params }: { params: { chatId: string } }
 ) {
   const session = await auth();
-  
+
   if (!session?.user?.id) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
@@ -58,7 +58,7 @@ export async function POST(
   try {
     const chatId = params.chatId;
     const { message, role = "user" } = await request.json();
-    
+
     if (!message || typeof message !== "string") {
       return NextResponse.json({ error: "Message is required" }, { status: 400 });
     }

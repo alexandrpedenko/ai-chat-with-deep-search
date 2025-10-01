@@ -1,0 +1,102 @@
+import type { Message } from "ai";
+import { db } from "./index";
+import { chats, messages } from "./schema";
+import { eq, desc, and } from "drizzle-orm";
+
+export const upsertChat = async (opts: {
+  userId: string;
+  chatId: string;
+  title: string;
+  messages: Message[];
+}) => {
+  const { userId, chatId, title, messages: messageList } = opts;
+
+  return await db.transaction(async (tx) => {
+    // Check if chat exists and verify ownership
+    const existingChat = await tx.query.chats.findFirst({
+      where: eq(chats.id, chatId),
+    });
+
+    if (existingChat && existingChat.userId !== userId) {
+      throw new Error("Chat does not belong to the logged in user");
+    }
+
+    // If chat doesn't exist, create it
+    if (!existingChat) {
+      await tx.insert(chats).values({
+        id: chatId,
+        userId,
+        title,
+      });
+    } else {
+      // Update existing chat title and updatedAt
+      await tx
+        .update(chats)
+        .set({
+          title,
+          updatedAt: new Date()
+        })
+        .where(eq(chats.id, chatId));
+    }
+
+    // Delete existing messages for this chat
+    await tx.delete(messages).where(eq(messages.chatId, chatId));
+
+    // Insert new messages
+    if (messageList.length > 0) {
+      const messageInserts = messageList.map((message, index) => ({
+        chatId,
+        role: message.role,
+        parts: message.parts || null,
+        order: index,
+      }));
+
+      await tx.insert(messages).values(messageInserts);
+    }
+
+    return chatId;
+  });
+};
+
+export const getChat = async (chatId: string, userId: string) => {
+  const chat = await db.query.chats.findFirst({
+    where: and(eq(chats.id, chatId), eq(chats.userId, userId)),
+    with: {
+      messages: {
+        orderBy: [messages.order],
+      },
+    },
+  });
+
+  if (!chat) {
+    return null;
+  }
+
+  // Transform messages to match AI SDK Message type
+  const transformedMessages: Message[] = chat.messages.map((msg) => ({
+    id: msg.id,
+    role: msg.role as "user" | "assistant" | "system",
+    content: "", // AI SDK requires content, but we use parts
+    parts: msg.parts as Message["parts"] || undefined,
+  }));
+
+  return {
+    ...chat,
+    messages: transformedMessages,
+  };
+};
+
+export const getChats = async (userId: string) => {
+  const userChats = await db.query.chats.findMany({
+    where: eq(chats.userId, userId),
+    orderBy: [desc(chats.updatedAt)],
+    columns: {
+      id: true,
+      title: true,
+      createdAt: true,
+      updatedAt: true,
+    },
+  });
+
+  return userChats;
+};

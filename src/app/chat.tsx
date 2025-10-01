@@ -12,21 +12,58 @@ import {
 import { Send as SendIcon } from '@mui/icons-material';
 import { useChat } from "@ai-sdk/react";
 import { useSession } from "next-auth/react";
+import { useRouter } from "next/navigation";
+import { useEffect } from "react";
+import type { Message } from "ai";
 import { ChatMessage } from "~/components/chat-message";
+import { isNewChatCreated } from "~/utils/chat";
 
 interface ChatProps {
   userName: string;
+  chatId?: string;
+  currentChat?: {
+    id: string;
+    userId: string;
+    title: string;
+    createdAt: Date | null;
+    updatedAt: Date | null;
+    messages: any[];
+  } | null;
 }
 
-export const ChatPage = ({ userName }: ChatProps) => {
+export const ChatPage = ({ userName, chatId, currentChat }: ChatProps) => {
   const { data: session, status } = useSession();
+  const router = useRouter();
+  
+  const initialMessages = (currentChat?.messages?.map((msg) => ({
+    id: msg.id,
+    role: msg.role as "user" | "assistant",
+    parts: msg.parts as any,
+    content: "",
+  })) || []) as Message[];
+  
   const {
     messages,
     input,
     handleInputChange,
     handleSubmit,
     isLoading,
-  } = useChat();
+    data,
+  } = useChat({
+    body: {
+      chatId,
+    },
+    initialMessages: initialMessages as any,
+  });
+
+  // Listen for NEW_CHAT_CREATED events and redirect
+  useEffect(() => {
+    const lastDataItem = data?.[data.length - 1];
+
+    if (isNewChatCreated(lastDataItem)) {
+      router.push(`?id=${lastDataItem.chatId}`);
+    }
+  }, [data, router]);
 
   const isAuthenticated = status === "authenticated" && session?.user;
   const isAuthenticating = status === "loading";

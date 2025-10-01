@@ -2,6 +2,7 @@ import type { Message } from "ai";
 import {
   streamText,
   createDataStreamResponse,
+  appendResponseMessages,
 } from "ai";
 import { z } from "zod";
 import { model } from "~/model";
@@ -9,6 +10,7 @@ import { auth } from "~/server/auth";
 import { searchSerper } from "~/serper";
 import { db } from "~/server/db";
 import { userRequests, users } from "~/server/db/schema";
+import { upsertChat } from "~/server/db/chat";
 import { and, count, eq, gte } from "drizzle-orm";
 
 export const maxDuration = 60;
@@ -74,13 +76,37 @@ export async function POST(request: Request) {
 
   const body = (await request.json()) as {
     messages: Array<Message>;
+    chatId?: string;
   };
 
   return createDataStreamResponse({
     execute: async (dataStream) => {
-      const { messages } = body;
+      const { messages, chatId } = body;
 
-      const result = streamText({
+      // Generate chat ID if not provided
+      const finalChatId = chatId || crypto.randomUUID();
+      const isNewChat = !chatId;
+
+      // Generate chat title from first user message (fallback to generic title)
+      const firstUserMessage = messages.find(msg => msg.role === 'user');
+      const chatTitle = firstUserMessage?.content.slice(0, 50) || "New Chat";
+
+      // Create/update chat with initial messages before streaming
+      // This protects against broken streams and ensures we don't lose data
+      await upsertChat({
+        userId,
+        chatId: finalChatId,
+        title: chatTitle,
+        messages,
+      });
+
+      // If this is a new chat, send the chat ID to the frontend
+      if (isNewChat) {
+        dataStream.writeData({
+          type: "NEW_CHAT_CREATED",
+          chatId: finalChatId,
+        });
+      } const result = streamText({
         model,
         messages,
         system: `You are a helpful AI assistant with access to web search capabilities. When answering questions, you should:
@@ -111,6 +137,31 @@ Remember to search for relevant terms and provide well-sourced, up-to-date respo
               }));
             },
           },
+        },
+        onFinish: async ({ text, finishReason, usage, response }) => {
+          try {
+            // Get the response messages from the AI
+            const responseMessages = response.messages;
+
+            // Append response messages to existing messages
+            // This handles tool call results and maintains proper message structure
+            const updatedMessages = appendResponseMessages({
+              messages,
+              responseMessages,
+            });
+
+            // Save the complete conversation to the database
+            // This replaces all existing messages with the updated ones
+            await upsertChat({
+              userId,
+              chatId: finalChatId,
+              title: chatTitle,
+              messages: updatedMessages,
+            });
+          } catch (error) {
+            console.error("Failed to save chat:", error);
+            // Don't throw here to avoid breaking the stream response
+          }
         },
       });
 
