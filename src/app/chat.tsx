@@ -2,22 +2,20 @@
 
 import { 
   Box, 
-  TextField, 
-  Button, 
   Stack,
   Container,
   CircularProgress,
   Alert
 } from '@mui/material';
-import { Send as SendIcon } from '@mui/icons-material';
 import { useChat } from "@ai-sdk/react";
 import { useSession } from "next-auth/react";
 import { useRouter } from "next/navigation";
-import { useEffect, useMemo } from "react";
+import { useEffect, useMemo, useCallback } from "react";
 import type { Message } from "ai";
 import { ChatMessage } from "~/components/chat-message";
 import { isNewChatCreated } from "~/utils/chat";
 import { ScrollableChat } from "~/components/scrollable-chat";
+import { ChatInput } from "~/components/chat-input";
 
 interface ChatProps {
   userName: string;
@@ -36,14 +34,16 @@ export const ChatPage = ({ userName, chatId, currentChat }: ChatProps) => {
   const { data: session, status } = useSession();
   const router = useRouter();
   
-  const initialMessages = useMemo(() => (
-    currentChat?.messages?.map((msg) => ({
+  const initialMessages = useMemo(() => {
+    const messages = currentChat?.messages?.map((msg) => ({
       id: msg.id,
       role: msg.role as "user" | "assistant",
       parts: msg.parts as any,
       content: "",
-    })) || []
-  ), [currentChat?.messages]) as Message[];
+    })) || [];
+    
+    return messages;
+  }, [currentChat?.id, currentChat?.messages?.length]) as Message[];
   
   const {
     messages,
@@ -61,17 +61,20 @@ export const ChatPage = ({ userName, chatId, currentChat }: ChatProps) => {
 
   // Listen for NEW_CHAT_CREATED events and redirect
   useEffect(() => {
-    const lastDataItem = data?.[data.length - 1];
+    if (!data?.length) return;
+    
+    const lastDataItem = data[data.length - 1];
 
     if (isNewChatCreated(lastDataItem)) {
+      console.log("Redirecting to new chat:", lastDataItem.chatId);
       router.push(`?id=${lastDataItem.chatId}`);
     }
-  }, [data, router]);
+  }, [data?.length, router]);
 
   const isAuthenticated = status === "authenticated" && session?.user;
   const isAuthenticating = status === "loading";
 
-  const handleFormSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
+  const handleFormSubmit = useCallback(async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     
     if (!isAuthenticated) {
@@ -80,7 +83,7 @@ export const ChatPage = ({ userName, chatId, currentChat }: ChatProps) => {
     }
     
     handleSubmit(e);
-  };
+  }, [isAuthenticated, handleSubmit]);
 
   return (
     <Box sx={{ 
@@ -121,59 +124,13 @@ export const ChatPage = ({ userName, chatId, currentChat }: ChatProps) => {
         </Container>
       </ScrollableChat>
 
-      {/* Input Area */}
-      <Box
-        sx={{
-          flexShrink: 0, // Prevent shrinking
-          borderTop: 1,
-          borderColor: 'divider',
-          bgcolor: 'background.paper',
-          p: 2,
-        }}
-      >
-        <Container maxWidth="md">
-          <Box
-            component="form"
-            onSubmit={handleFormSubmit}
-            sx={{ display: 'flex', gap: 1, alignItems: 'flex-end' }}
-          >
-            <TextField
-              fullWidth
-              multiline
-              maxRows={4}
-              placeholder={
-                !isAuthenticated 
-                  ? "Sign in to start chatting..." 
-                  : "Say something..."
-              }
-              variant="outlined"
-              size="small"
-              value={input}
-              onChange={handleInputChange}
-              disabled={isLoading || !isAuthenticated}
-              sx={{
-                '& .MuiOutlinedInput-root': {
-                  backgroundColor: 'background.default',
-                }
-              }}
-              autoFocus={!!isAuthenticated}
-            />
-            <Button
-              type="submit"
-              variant="contained"
-              endIcon={<SendIcon />}
-              disabled={isLoading || !isAuthenticated}
-              sx={{ 
-                minWidth: 'auto',
-                px: 2,
-                height: '40px'
-              }}
-            >
-              Send
-            </Button>
-          </Box>
-        </Container>
-      </Box>
+      <ChatInput
+        input={input}
+        isLoading={isLoading}
+        isAuthenticated={!!isAuthenticated}
+        onInputChange={handleInputChange}
+        onSubmit={handleFormSubmit}
+      />
     </Box>
   );
 };

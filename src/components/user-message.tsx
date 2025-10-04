@@ -1,3 +1,4 @@
+import React from 'react';
 import { 
   Box, 
   Avatar, 
@@ -14,7 +15,7 @@ interface UserMessageProps {
   userName: string;
 }
 
-export const UserMessage = ({ message, userName }: UserMessageProps) => {
+export const UserMessage = React.memo(({ message, userName }: UserMessageProps) => {
   return (
     <Box sx={{ display: 'flex', gap: 2, alignItems: 'flex-start', justifyContent: 'flex-end' }}>
       <Box sx={{ maxWidth: '70%' }}>
@@ -57,4 +58,6 @@ export const UserMessage = ({ message, userName }: UserMessageProps) => {
       </Avatar>
     </Box>
   );
-};
+});
+
+UserMessage.displayName = 'UserMessage';

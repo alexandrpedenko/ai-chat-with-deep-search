@@ -1,3 +1,4 @@
+import React from 'react';
 import type { Message } from "ai";
 import { UserMessage } from './user-message';
 import { AssistantMessage } from './assistant-message';
@@ -7,7 +8,7 @@ interface ChatMessageProps {
   userName: string;
 }
 
-export const ChatMessage = ({ message, userName }: ChatMessageProps) => {
+export const ChatMessage = React.memo(({ message, userName }: ChatMessageProps) => {
   const isUser = message.role === "user";
   
   if (isUser) {
@@ -15,4 +16,6 @@ export const ChatMessage = ({ message, userName }: ChatMessageProps) => {
   }
   
   return <AssistantMessage message={message} />;
-};
+});
+
+ChatMessage.displayName = 'ChatMessage';
