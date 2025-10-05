@@ -19,7 +19,33 @@ const langfuse = new Langfuse({
   environment: env.NODE_ENV,
 });
 
-export const maxDuration = 60;
+const getSystemMessage = () => {
+  const currentDateTime = new Date().toLocaleString('en-US', {
+    weekday: 'long',
+    year: 'numeric',
+    month: 'long',
+    day: 'numeric',
+    hour: '2-digit',
+    minute: '2-digit',
+    timeZoneName: 'short'
+  });
+
+  return `You are a helpful AI assistant with access to web search capabilities.
+
+CURRENT DATE AND TIME: ${currentDateTime}
+
+When answering questions, you should:
+1. Always attempt to use the searchWeb tool to find current and relevant information
+2. When users ask for "up to date", "recent", "latest", or "current" information, use the current date in your search queries
+3. Pay attention to publication dates in search results and prioritize recent sources
+4. Provide comprehensive answers that combine your knowledge with the latest web search results
+5. Always cite your sources using inline links in markdown format: [source title](url)
+6. If you find multiple relevant sources, include several citations to provide complete information
+7. Be transparent about when information comes from web search vs your training data
+8. Prioritize recent and authoritative sources when available
+
+Remember to search for relevant terms and provide well-sourced, up-to-date responses. When users ask for current information, include date-specific terms in your searches (e.g., "2025", "October", "latest", "recent").`;
+};
 
 export async function POST(request: Request) {
   const session = await auth();
@@ -119,18 +145,12 @@ export async function POST(request: Request) {
           type: "NEW_CHAT_CREATED",
           chatId: finalChatId,
         });
-      } const result = streamText({
+      }
+
+      const result = streamText({
         model,
         messages,
-        system: `You are a helpful AI assistant with access to web search capabilities. When answering questions, you should:
-1. Always attempt to use the searchWeb tool to find current and relevant information
-2. Provide comprehensive answers that combine your knowledge with the latest web search results
-3. Always cite your sources using inline links in markdown format: [source title](url)
-4. If you find multiple relevant sources, include several citations to provide complete information
-5. Be transparent about when information comes from web search vs your training data
-6. Prioritize recent and authoritative sources when available
-
-Remember to search for relevant terms and provide well-sourced, up-to-date responses.`,
+        system: getSystemMessage(),
         maxSteps: 10,
         experimental_telemetry: {
           isEnabled: true,
@@ -154,6 +174,7 @@ Remember to search for relevant terms and provide well-sourced, up-to-date respo
                 title: result.title,
                 link: result.link,
                 snippet: result.snippet,
+                date: result.date || 'Date not available',
               }));
             },
           },
