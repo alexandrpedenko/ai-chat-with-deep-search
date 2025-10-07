@@ -4,48 +4,20 @@ import {
   createDataStreamResponse,
   appendResponseMessages,
 } from "ai";
-import { z } from "zod";
-import { model } from "~/model";
 import { auth } from "~/server/auth";
-import { searchSerper } from "~/serper";
 import { db } from "~/server/db";
 import { userRequests, users } from "~/server/db/schema";
 import { upsertChat } from "~/server/db/chat";
 import { and, count, eq, gte } from "drizzle-orm";
 import { Langfuse } from "langfuse";
 import { env } from "~/env";
+import { streamFromDeepSearch } from "~/deep-search";
 
 const langfuse = new Langfuse({
   environment: env.NODE_ENV,
 });
 
-const getSystemMessage = () => {
-  const currentDateTime = new Date().toLocaleString('en-US', {
-    weekday: 'long',
-    year: 'numeric',
-    month: 'long',
-    day: 'numeric',
-    hour: '2-digit',
-    minute: '2-digit',
-    timeZoneName: 'short'
-  });
 
-  return `You are a helpful AI assistant with access to web search capabilities.
-
-CURRENT DATE AND TIME: ${currentDateTime}
-
-When answering questions, you should:
-1. Always attempt to use the searchWeb tool to find current and relevant information
-2. When users ask for "up to date", "recent", "latest", or "current" information, use the current date in your search queries
-3. Pay attention to publication dates in search results and prioritize recent sources
-4. Provide comprehensive answers that combine your knowledge with the latest web search results
-5. Always cite your sources using inline links in markdown format: [source title](url)
-6. If you find multiple relevant sources, include several citations to provide complete information
-7. Be transparent about when information comes from web search vs your training data
-8. Prioritize recent and authoritative sources when available
-
-Remember to search for relevant terms and provide well-sourced, up-to-date responses. When users ask for current information, include date-specific terms in your searches (e.g., "2025", "October", "latest", "recent").`;
-};
 
 export async function POST(request: Request) {
   const session = await auth();
@@ -147,36 +119,13 @@ export async function POST(request: Request) {
         });
       }
 
-      const result = streamText({
-        model,
+      const result = streamFromDeepSearch({
         messages,
-        system: getSystemMessage(),
-        maxSteps: 10,
-        experimental_telemetry: {
+        telemetry: {
           isEnabled: true,
           functionId: `agent`,
           metadata: {
             langfuseTraceId: trace.id,
-          },
-        },
-        tools: {
-          searchWeb: {
-            parameters: z.object({
-              query: z.string().describe("The query to search the web for"),
-            }),
-            execute: async ({ query }, { abortSignal }) => {
-              const results = await searchSerper(
-                { q: query, num: 10 },
-                abortSignal,
-              );
-
-              return results.organic.map((result) => ({
-                title: result.title,
-                link: result.link,
-                snippet: result.snippet,
-                date: result.date || 'Date not available',
-              }));
-            },
           },
         },
         onFinish: async ({ text, finishReason, usage, response }) => {
