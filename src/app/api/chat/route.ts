@@ -1,6 +1,5 @@
 import type { Message } from "ai";
 import {
-  streamText,
   createDataStreamResponse,
   appendResponseMessages,
 } from "ai";
@@ -12,6 +11,7 @@ import { and, count, eq, gte } from "drizzle-orm";
 import { Langfuse } from "langfuse";
 import { env } from "~/env";
 import { streamFromDeepSearch } from "~/deep-search";
+import { checkRateLimit, recordRateLimit, type RateLimitConfig } from "~/server/rate-limit";
 
 const langfuse = new Langfuse({
   environment: env.NODE_ENV,
@@ -118,6 +118,32 @@ export async function POST(request: Request) {
           chatId: finalChatId,
         });
       }
+
+      // Global rate limiting for LLM calls
+      const globalRateLimitConfig: RateLimitConfig = {
+        maxRequests: 1, // For testing - only 1 request allowed
+        windowMs: 5_000, // For testing - 5 second window
+        keyPrefix: "global_llm",
+        maxRetries: 3,
+      };
+
+      // Check global rate limit
+      const rateLimitCheck = await checkRateLimit(globalRateLimitConfig);
+
+      if (!rateLimitCheck.allowed) {
+        console.log("Global LLM rate limit exceeded, waiting for reset...");
+        const isAllowed = await rateLimitCheck.retry();
+
+        if (!isAllowed) {
+          console.error("Global LLM rate limit still exceeded after retries");
+        }
+      }
+
+      // Record the LLM request
+      await recordRateLimit({
+        windowMs: globalRateLimitConfig.windowMs,
+        keyPrefix: globalRateLimitConfig.keyPrefix,
+      });
 
       const result = streamFromDeepSearch({
         messages,
