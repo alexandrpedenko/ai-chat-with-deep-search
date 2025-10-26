@@ -26,6 +26,9 @@ export const env = createEnv({
     EVAL_DATASET: z
       .enum(["dev", "ci", "regression"])
       .default("dev"),
+    SEARCH_RESULTS_COUNT: z.coerce
+      .number()
+      .default(10),
   },
 
   /**
@@ -52,6 +55,7 @@ export const env = createEnv({
     LANGFUSE_BASEURL: process.env.LANGFUSE_BASEURL,
     NODE_ENV: process.env.NODE_ENV,
     EVAL_DATASET: process.env.EVAL_DATASET,
+    SEARCH_RESULTS_COUNT: process.env.SEARCH_RESULTS_COUNT,
   },
   /**
    * Run `build` or `dev` with `SKIP_ENV_VALIDATION` to skip env validation. This is especially

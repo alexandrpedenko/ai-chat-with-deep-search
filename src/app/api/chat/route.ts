@@ -26,12 +26,10 @@ export async function POST(request: Request) {
     return new Response("Unauthorized", { status: 401 });
   }
 
-  // Rate limiting check
   const userId = session.user.id;
   const now = new Date();
   const oneHourAgo = new Date(now.getTime() - 60 * 60 * 1000);
 
-  // Check if user is admin (admins bypass rate limits)
   const user = await db.query.users.findFirst({
     where: eq(users.id, userId),
     columns: { isAdmin: true }
@@ -87,23 +85,18 @@ export async function POST(request: Request) {
     execute: async (dataStream) => {
       const { messages, chatId } = body;
 
-      // Generate chat ID if not provided
       const finalChatId = chatId || crypto.randomUUID();
       const isNewChat = !chatId;
 
-      // Create Langfuse trace with session and user tracking
       const trace = langfuse.trace({
         sessionId: finalChatId,
         name: "chat",
         userId: session.user.id,
       });
 
-      // Generate chat title from first user message (fallback to generic title)
       const firstUserMessage = messages.find(msg => msg.role === 'user');
       const chatTitle = firstUserMessage?.content.slice(0, 50) || "New Chat";
 
-      // Create/update chat with initial messages before streaming
-      // This protects against broken streams and ensures we don't lose data
       await upsertChat({
         userId,
         chatId: finalChatId,
@@ -111,7 +104,6 @@ export async function POST(request: Request) {
         messages,
       });
 
-      // If this is a new chat, send the chat ID to the frontend
       if (isNewChat) {
         dataStream.writeData({
           type: "NEW_CHAT_CREATED",
@@ -119,15 +111,12 @@ export async function POST(request: Request) {
         });
       }
 
-      // Global rate limiting for LLM calls
       const globalRateLimitConfig: RateLimitConfig = {
         maxRequests: 1, // For testing - only 1 request allowed
         windowMs: 5_000, // For testing - 5 second window
         keyPrefix: "global_llm",
         maxRetries: 3,
       };
-
-      // Check global rate limit
       const rateLimitCheck = await checkRateLimit(globalRateLimitConfig);
 
       if (!rateLimitCheck.allowed) {
@@ -145,7 +134,7 @@ export async function POST(request: Request) {
         keyPrefix: globalRateLimitConfig.keyPrefix,
       });
 
-      const result = streamFromDeepSearch({
+      const result = await streamFromDeepSearch({
         messages,
         telemetry: {
           isEnabled: true,
