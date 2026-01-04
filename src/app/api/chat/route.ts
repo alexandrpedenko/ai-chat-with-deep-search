@@ -17,8 +17,6 @@ const langfuse = new Langfuse({
   environment: env.NODE_ENV,
 });
 
-
-
 export async function POST(request: Request) {
   const session = await auth();
 
@@ -142,6 +140,9 @@ export async function POST(request: Request) {
           metadata: {
             langfuseTraceId: trace.id,
           },
+        },
+        writeMessageAnnotation: (annotation) => {
+          dataStream.writeMessageAnnotation(annotation as any);
         },
         onFinish: async ({ text, finishReason, usage, response }) => {
           try {

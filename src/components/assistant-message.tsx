@@ -8,12 +8,16 @@ import {
 import { SmartToy as BotIcon } from '@mui/icons-material';
 import type { Message } from "ai";
 import { MessagePartsRenderer } from './message-parts';
+import { ReasoningSteps } from './reasoning-steps';
+import type { OurMessageAnnotation } from '~/deep-search/get-next-action';
 
 interface AssistantMessageProps {
   message: Message;
 }
 
 export const AssistantMessage = ({ message }: AssistantMessageProps) => {
+  const annotations = (message.annotations || []) as unknown as OurMessageAnnotation[];
+  
   return (
     <Box sx={{ display: 'flex', gap: 2, alignItems: 'flex-start', justifyContent: 'flex-start' }}>
       <Avatar
@@ -31,6 +35,8 @@ export const AssistantMessage = ({ message }: AssistantMessageProps) => {
           <Typography variant="subtitle2" color="text.secondary">
             Assistant
           </Typography>
+          
+          <ReasoningSteps annotations={annotations} />
           
           <Paper
             elevation={1}

@@ -6,15 +6,32 @@ import { SystemContext } from "./system-context";
 export interface SearchAction {
   type: "search";
   query: string;
+  title: string;
+  reasoning: string;
 }
 
 export interface AnswerAction {
   type: "answer";
+  title: string;
+  reasoning: string;
 }
 
 export type Action = SearchAction | AnswerAction;
 
+export type OurMessageAnnotation = {
+  type: "NEW_ACTION";
+  action: Action;
+};
+
 export const actionSchema = z.object({
+  title: z
+    .string()
+    .describe(
+      "The title of the action, to be displayed in the UI. Be extremely concise. 'Searching Saka's injury history', 'Checking HMRC industrial action', 'Comparing toaster ovens'",
+    ),
+  reasoning: z
+    .string()
+    .describe("The reason you chose this step."),
   type: z
     .enum(["search", "answer"])
     .describe(
