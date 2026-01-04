@@ -1,6 +1,7 @@
-import { streamText, type StreamTextResult } from "ai";
+import { streamText, type StreamTextResult, smoothStream } from "ai";
 import { model } from "~/model";
 import { SystemContext } from "./system-context";
+import { markdownJoinerTransform } from "./markdown-joiner";
 
 export function answerQuestion(
   ctx: SystemContext,
@@ -40,6 +41,13 @@ ${ctx.getQueryHistory()}`,
         },
       }
       : undefined,
+    experimental_transform: [
+      markdownJoinerTransform(),
+      smoothStream({
+        delayInMs: 20,
+        chunking: "line",
+      }),
+    ],
     onFinish,
   });
 }

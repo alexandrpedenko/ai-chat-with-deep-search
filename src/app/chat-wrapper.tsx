@@ -6,8 +6,6 @@ import { ChatPage } from "./chat";
 import { Header } from "~/components/header";
 import { Sidebar } from '~/components/sidebar';
 
-const drawerWidth = 280;
-
 interface ChatPageWrapperProps {
   chatId?: string;
   userChats: {
