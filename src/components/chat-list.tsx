@@ -12,6 +12,7 @@ import {
 } from '@mui/material';
 import { Add as AddIcon } from '@mui/icons-material';
 import { useSession } from 'next-auth/react';
+import Link from 'next/link';
 
 interface Chat {
   id: string;
@@ -26,7 +27,9 @@ interface ChatListProps {
 }
 
 export function ChatList({ userChats, currentChatId }: ChatListProps) {
-  const { data: session } = useSession();
+  const { data: session, status } = useSession();
+
+  const shouldShowChats = session || status === 'loading';
 
   return (
     <Box sx={{ p: 2 }}>
@@ -36,7 +39,7 @@ export function ChatList({ userChats, currentChatId }: ChatListProps) {
         </Typography>
         <IconButton 
           size="small" 
-          component="a"
+          component={Link}
           href="/"
           sx={{ 
             backgroundColor: 'action.hover',
@@ -54,12 +57,12 @@ export function ChatList({ userChats, currentChatId }: ChatListProps) {
       <Divider />
       
       <List sx={{ pt: 1 }}>
-        {session ? (
+        {shouldShowChats ? (
           userChats.length > 0 ? (
             userChats.map((chat) => (
               <ListItem key={chat.id} disablePadding>
                 <ListItemButton
-                  component="a"
+                  component={Link}
                   href={`?id=${chat.id}`}
                   selected={chat.id === currentChatId}
                   sx={{

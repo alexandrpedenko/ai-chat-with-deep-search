@@ -11,7 +11,7 @@ import { signIn, signOut, useSession } from 'next-auth/react';
 export const AuthButton = () => {
   const { data: session, status } = useSession();
 
-  if (status === "loading") {
+  if (status === "loading" || !session) {
     return (
       <Button disabled>
         Loading...

@@ -16,6 +16,7 @@ import { ChatMessage } from "~/components/chat-message";
 import { isNewChatCreated } from "~/utils/chat";
 import { ScrollableChat } from "~/components/scrollable-chat";
 import { ChatInput } from "~/components/chat-input";
+import { LoadingOverlay } from "~/components/loading-overlay";
 
 interface ChatProps {
   userName: string;
@@ -92,8 +93,11 @@ export const ChatPage = ({ userName, chatId, currentChat }: ChatProps) => {
       height: '100vh',
       maxHeight: '100vh',
       overflow: 'hidden',
-      bgcolor: 'background.default'
+      bgcolor: 'background.default',
+      position: 'relative'
     }}>
+      {(isAuthenticating && !session) && <LoadingOverlay />}
+      
       {/* Messages Area */}
       <ScrollableChat>
         <Container maxWidth="md" sx={{ flexGrow: 1 }}>
@@ -101,11 +105,6 @@ export const ChatPage = ({ userName, chatId, currentChat }: ChatProps) => {
             {!isAuthenticated && !isAuthenticating && (
               <Alert severity="info" sx={{ mb: 2 }}>
                 Please sign in with GitHub to start chatting with the AI assistant.
-              </Alert>
-            )}
-            {isAuthenticating && (
-              <Alert severity="info" sx={{ mb: 2 }}>
-                Checking authentication status...
               </Alert>
             )}
             {messages.map((message) => (
