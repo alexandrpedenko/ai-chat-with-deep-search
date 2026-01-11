@@ -1,4 +1,5 @@
 import type { Message } from "ai";
+import { getMessageText } from "~/domain/message-helpers";
 
 type QueryResultSearchResult = {
   date: string;
@@ -11,7 +12,6 @@ type QueryResult = {
   query: string;
   results: QueryResultSearchResult[];
 };
-
 
 const toQueryResult = (query: QueryResultSearchResult) =>
   [`### ${query.date} - ${query.title}`, query.url, query.snippet].join("\n\n");
@@ -30,7 +30,9 @@ export class SystemContext {
     return this.messages
       .map((message) => {
         const role = message.role === "user" ? "User" : "Assistant";
-        return `<${role}>${message.content}</${role}>`;
+        const text = getMessageText(message);
+
+        return `<${role}>${text}</${role}>`;
       })
       .join("\n\n");
   }
@@ -67,7 +69,7 @@ export class SystemContext {
     const lastUserMessage = this.messages
       .filter(msg => msg.role === "user")
       .pop();
-    return lastUserMessage?.content || "";
+    return lastUserMessage ? getMessageText(lastUserMessage) : "";
   }
 
   getCurrentSearchResults() {

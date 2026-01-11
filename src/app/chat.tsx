@@ -28,6 +28,7 @@ interface ChatProps {
 export const ChatPage = ({ userName, chatId, currentChat }: ChatProps) => {
   const { data: session, status } = useSession();
   const router = useRouter();
+
   
   const initialMessages = useMemo(() => {
     const messages = currentChat?.messages?.map((msg) => ({
@@ -40,7 +41,7 @@ export const ChatPage = ({ userName, chatId, currentChat }: ChatProps) => {
     
     return messages;
   }, [currentChat?.id, currentChat?.messages?.length]) as Message[];
-  
+
   const {
     messages,
     input,
@@ -62,7 +63,6 @@ export const ChatPage = ({ userName, chatId, currentChat }: ChatProps) => {
     const lastDataItem = data[data.length - 1];
 
     if (isNewChatCreated(lastDataItem)) {
-      console.log("Redirecting to new chat:", lastDataItem.chatId);
       router.push(`?id=${lastDataItem.chatId}`);
     }
   }, [data?.length, router]);

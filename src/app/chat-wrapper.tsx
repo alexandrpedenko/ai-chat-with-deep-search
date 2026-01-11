@@ -38,6 +38,7 @@ export function ChatPageWrapper({ chatId, userChats, currentChat }: ChatPageWrap
         }}
       >
         <ChatPage 
+          key={chatId || 'new-chat'}
           userName={session?.user?.name || "Guest"} 
           chatId={chatId} 
           currentChat={currentChat}

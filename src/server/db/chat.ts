@@ -1,6 +1,7 @@
 import type { Message } from "ai";
 import type { Chat, ChatMessage, UserChat } from "~/domain/chat";
 import { parseAnnotations } from "~/domain/annotation";
+import { getTextFromParts } from "~/domain/message-helpers";
 import { db } from "./index";
 import { chats, messages } from "./schema";
 import { eq, desc, and } from "drizzle-orm";
@@ -76,13 +77,18 @@ export const getChat = async (chatId: string, userId: string): Promise<Chat | nu
   }
 
   // Transform messages to match AI SDK Message type
-  const transformedMessages: ChatMessage[] = chat.messages.map((msg) => ({
-    id: msg.id,
-    role: msg.role as "user" | "assistant" | "system",
-    content: "", // AI SDK requires content, but we use parts
-    parts: msg.parts as Message["parts"] || undefined,
-    annotations: parseAnnotations(msg.annotations),
-  }));
+  const transformedMessages: ChatMessage[] = chat.messages.map((msg) => {
+    const parts = msg.parts as Message["parts"] || undefined;
+    const content = getTextFromParts(parts);
+
+    return {
+      id: msg.id,
+      role: msg.role as "user" | "assistant" | "system",
+      content, // Restored from parts for context/history
+      parts,
+      annotations: parseAnnotations(msg.annotations),
+    };
+  });
 
   return {
     ...chat,

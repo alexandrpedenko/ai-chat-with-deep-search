@@ -21,3 +21,8 @@ export {
   toJSONValue,
   toJSONValueArray,
 } from './annotation';
+
+export {
+  getTextFromParts,
+  getMessageText,
+} from './message-helpers';
