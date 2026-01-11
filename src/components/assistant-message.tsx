@@ -7,17 +7,18 @@ import {
 } from '@mui/material';
 import { SmartToy as BotIcon } from '@mui/icons-material';
 import type { Message } from "ai";
+import { parseAnnotations } from '~/domain/annotation';
 import { MessagePartsRenderer } from './message-parts';
 import { ReasoningSteps } from './reasoning-steps';
-import type { OurMessageAnnotation } from '~/deep-search/get-next-action';
+import { useMemo } from 'react';
 
 interface AssistantMessageProps {
   message: Message;
 }
 
 export const AssistantMessage = ({ message }: AssistantMessageProps) => {
-  const annotations = (message.annotations || []) as unknown as OurMessageAnnotation[];
-  
+  const annotations = useMemo(() => parseAnnotations(message.annotations), [message.annotations]);
+
   return (
     <Box sx={{ display: 'flex', gap: 2, alignItems: 'flex-start', justifyContent: 'flex-start' }}>
       <Avatar

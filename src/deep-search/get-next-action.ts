@@ -2,26 +2,10 @@ import { generateObject } from "ai";
 import { z } from "zod";
 import { model } from "~/model";
 import { SystemContext } from "./system-context";
+import type { MessageAnnotation } from "~/domain/annotation";
 
-export interface SearchAction {
-  type: "search";
-  query: string;
-  title: string;
-  reasoning: string;
-}
-
-export interface AnswerAction {
-  type: "answer";
-  title: string;
-  reasoning: string;
-}
-
-export type Action = SearchAction | AnswerAction;
-
-export type OurMessageAnnotation = {
-  type: "NEW_ACTION";
-  action: Action;
-};
+// Type alias for clarity in this module
+export type OurMessageAnnotation = MessageAnnotation;
 
 export const actionSchema = z.object({
   title: z

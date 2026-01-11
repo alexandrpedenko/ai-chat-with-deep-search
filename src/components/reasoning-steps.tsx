@@ -14,11 +14,11 @@ import {
   ExpandMore as ExpandMoreIcon,
   ExpandLess as ExpandLessIcon
 } from '@mui/icons-material';
-import type { OurMessageAnnotation } from '~/deep-search/get-next-action';
+import type { MessageAnnotation } from '~/domain/annotation';
 import { Markdown } from './markdown';
 
 interface ReasoningStepsProps {
-  annotations: OurMessageAnnotation[];
+  annotations: MessageAnnotation[];
 }
 
 export const ReasoningSteps = ({ annotations }: ReasoningStepsProps) => {
@@ -93,6 +93,7 @@ export const ReasoningSteps = ({ annotations }: ReasoningStepsProps) => {
                   }}
                 >
                   <Typography 
+                    component="div"
                     variant="body2" 
                     sx={{ 
                       fontStyle: 'italic',

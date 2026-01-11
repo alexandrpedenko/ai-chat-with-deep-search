@@ -12,6 +12,7 @@ import { useSession } from "next-auth/react";
 import { useRouter } from "next/navigation";
 import { useEffect, useMemo, useCallback } from "react";
 import type { Message } from "ai";
+import type { Chat } from "~/domain/chat";
 import { ChatMessage } from "~/components/chat-message";
 import { isNewChatCreated } from "~/utils/chat";
 import { ScrollableChat } from "~/components/scrollable-chat";
@@ -21,14 +22,7 @@ import { LoadingOverlay } from "~/components/loading-overlay";
 interface ChatProps {
   userName: string;
   chatId?: string;
-  currentChat?: {
-    id: string;
-    userId: string;
-    title: string;
-    createdAt: Date | null;
-    updatedAt: Date | null;
-    messages: any[];
-  } | null;
+  currentChat?: Chat | null;
 }
 
 export const ChatPage = ({ userName, chatId, currentChat }: ChatProps) => {
@@ -38,9 +32,10 @@ export const ChatPage = ({ userName, chatId, currentChat }: ChatProps) => {
   const initialMessages = useMemo(() => {
     const messages = currentChat?.messages?.map((msg) => ({
       id: msg.id,
-      role: msg.role as "user" | "assistant",
-      parts: msg.parts as any,
-      content: "",
+      role: msg.role,
+      parts: msg.parts,
+      annotations: msg.annotations,
+      content: msg.content,
     })) || [];
     
     return messages;
@@ -57,7 +52,7 @@ export const ChatPage = ({ userName, chatId, currentChat }: ChatProps) => {
     body: {
       chatId,
     },
-    initialMessages: initialMessages as any,
+    initialMessages,
   });
 
   // Listen for NEW_CHAT_CREATED events and redirect
@@ -110,7 +105,7 @@ export const ChatPage = ({ userName, chatId, currentChat }: ChatProps) => {
             {messages.map((message) => (
               <ChatMessage
                 key={message.id}
-                message={message as any}
+                message={message as Message}
                 userName={userName}
               />
             ))}

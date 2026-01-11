@@ -5,13 +5,13 @@ import {
   type StreamTextResult,
 } from "ai";
 import { runDeepSearchLoop } from "./deep-search/run-deep-search-loop";
-import type { OurMessageAnnotation } from "./deep-search/get-next-action";
+import type { MessageAnnotation } from "~/domain/annotation";
 
 export function streamFromDeepSearch(opts: {
   messages: Message[];
   onFinish: Parameters<typeof streamText>[0]["onFinish"];
   telemetry: TelemetrySettings;
-  writeMessageAnnotation: (annotation: OurMessageAnnotation) => void;
+  writeMessageAnnotation: (annotation: MessageAnnotation) => void;
 }): Promise<StreamTextResult<{}, string>> {
   return runDeepSearchLoop(opts.messages, {
     langfuseTraceId: opts.telemetry.metadata?.langfuseTraceId as string,

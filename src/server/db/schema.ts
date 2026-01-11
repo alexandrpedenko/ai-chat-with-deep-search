@@ -158,6 +158,7 @@ export const messages = createTable(
       .references(() => chats.id),
     role: varchar("role", { length: 50 }).notNull(), // 'user' or 'assistant'
     parts: json("parts"), // Store message parts as JSON
+    annotations: json("annotations"), // Store message annotations as JSON
     order: integer("order").notNull(), // Order of messages in the chat
   },
   (message) => ({

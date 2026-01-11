@@ -1,4 +1,6 @@
 import type { Message } from "ai";
+import type { Chat, ChatMessage, UserChat } from "~/domain/chat";
+import { parseAnnotations } from "~/domain/annotation";
 import { db } from "./index";
 import { chats, messages } from "./schema";
 import { eq, desc, and } from "drizzle-orm";
@@ -48,6 +50,7 @@ export const upsertChat = async (opts: {
         chatId,
         role: message.role,
         parts: message.parts || null,
+        annotations: message.annotations || null,
         order: index,
       }));
 
@@ -58,7 +61,7 @@ export const upsertChat = async (opts: {
   });
 };
 
-export const getChat = async (chatId: string, userId: string) => {
+export const getChat = async (chatId: string, userId: string): Promise<Chat | null> => {
   const chat = await db.query.chats.findFirst({
     where: and(eq(chats.id, chatId), eq(chats.userId, userId)),
     with: {
@@ -73,11 +76,12 @@ export const getChat = async (chatId: string, userId: string) => {
   }
 
   // Transform messages to match AI SDK Message type
-  const transformedMessages: Message[] = chat.messages.map((msg) => ({
+  const transformedMessages: ChatMessage[] = chat.messages.map((msg) => ({
     id: msg.id,
     role: msg.role as "user" | "assistant" | "system",
     content: "", // AI SDK requires content, but we use parts
     parts: msg.parts as Message["parts"] || undefined,
+    annotations: parseAnnotations(msg.annotations),
   }));
 
   return {
@@ -86,7 +90,7 @@ export const getChat = async (chatId: string, userId: string) => {
   };
 };
 
-export const getChats = async (userId: string) => {
+export const getChats = async (userId: string): Promise<UserChat[]> => {
   const userChats = await db.query.chats.findMany({
     where: eq(chats.userId, userId),
     orderBy: [desc(chats.updatedAt)],

@@ -12,6 +12,8 @@ import { Langfuse } from "langfuse";
 import { env } from "~/env";
 import { streamFromDeepSearch } from "~/deep-search";
 import { checkRateLimit, recordRateLimit, type RateLimitConfig } from "~/server/rate-limit";
+import type { MessageAnnotation } from "~/domain/annotation";
+import { toJSONValue, toJSONValueArray } from "~/domain/annotation";
 
 const langfuse = new Langfuse({
   environment: env.NODE_ENV,
@@ -85,6 +87,7 @@ export async function POST(request: Request) {
 
       const finalChatId = chatId || crypto.randomUUID();
       const isNewChat = !chatId;
+      const annotations: MessageAnnotation[] = [];
 
       const trace = langfuse.trace({
         sessionId: finalChatId,
@@ -142,9 +145,12 @@ export async function POST(request: Request) {
           },
         },
         writeMessageAnnotation: (annotation) => {
-          dataStream.writeMessageAnnotation(annotation as any);
+          annotations.push(annotation);
+          if (annotation) {
+            dataStream.writeMessageAnnotation(toJSONValue(annotation));
+          }
         },
-        onFinish: async ({ text, finishReason, usage, response }) => {
+        onFinish: async ({ response }) => {
           try {
             const responseMessages = response.messages;
 
@@ -152,6 +158,11 @@ export async function POST(request: Request) {
               messages,
               responseMessages,
             });
+
+            const lastMessage = updatedMessages[updatedMessages.length - 1];
+            if (lastMessage && annotations.length > 0) {
+              lastMessage.annotations = toJSONValueArray(annotations);
+            }
 
             await upsertChat({
               userId,

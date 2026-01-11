@@ -13,16 +13,10 @@ import {
 import { Add as AddIcon } from '@mui/icons-material';
 import { useSession } from 'next-auth/react';
 import Link from 'next/link';
-
-interface Chat {
-  id: string;
-  title: string;
-  createdAt: Date | null;
-  updatedAt: Date | null;
-}
+import type { UserChat } from '~/domain/chat';
 
 interface ChatListProps {
-  userChats: Chat[];
+  userChats: UserChat[];
   currentChatId?: string;
 }
 

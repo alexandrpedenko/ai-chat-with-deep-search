@@ -10,6 +10,7 @@ const markdownComponents: Components = {
   // Override default elements with Material-UI styling
   p: ({ children }) => (
     <Typography 
+      component="div"
       variant="body1" 
       sx={{ 
         mb: 2, 

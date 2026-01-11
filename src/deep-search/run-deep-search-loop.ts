@@ -1,6 +1,7 @@
 import type { Message, StreamTextResult } from "ai";
 import { streamText } from "ai";
-import { getNextAction, type OurMessageAnnotation, type Action } from "./get-next-action";
+import { getNextAction } from "./get-next-action";
+import type { MessageAnnotation, Action } from "~/domain/annotation";
 import { SystemContext } from "./system-context";
 import { performSearch } from "./perform-search";
 import { answerQuestion } from "./answer-question";
@@ -10,7 +11,7 @@ export async function runDeepSearchLoop(
   opts: {
     langfuseTraceId?: string;
     onFinish?: Parameters<typeof streamText>[0]["onFinish"];
-    writeMessageAnnotation: (annotation: OurMessageAnnotation) => void;
+    writeMessageAnnotation: (annotation: MessageAnnotation) => void;
   },
 ): Promise<StreamTextResult<{}, string>> {
   const ctx = new SystemContext(messages);
@@ -23,7 +24,7 @@ export async function runDeepSearchLoop(
     opts.writeMessageAnnotation({
       type: "NEW_ACTION",
       action: nextAction as Action,
-    } satisfies OurMessageAnnotation);
+    } satisfies MessageAnnotation);
 
     if (nextAction.type === "search") {
       await performSearch(ctx, nextAction.query);

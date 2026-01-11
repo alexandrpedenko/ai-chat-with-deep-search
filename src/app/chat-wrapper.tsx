@@ -2,26 +2,15 @@
 
 import { Box } from '@mui/material';
 import { useSession } from 'next-auth/react';
+import type { Chat, UserChat } from '~/domain/chat';
 import { ChatPage } from "./chat";
 import { Header } from "~/components/header";
 import { Sidebar } from '~/components/sidebar';
 
 interface ChatPageWrapperProps {
   chatId?: string;
-  userChats: {
-    id: string;
-    title: string;
-    createdAt: Date | null;
-    updatedAt: Date | null;
-  }[];
-  currentChat: {
-    id: string;
-    userId: string;
-    title: string;
-    createdAt: Date | null;
-    updatedAt: Date | null;
-    messages: any[];
-  } | null;
+  userChats: UserChat[];
+  currentChat: Chat | null;
 }
 
 export function ChatPageWrapper({ chatId, userChats, currentChat }: ChatPageWrapperProps) {
