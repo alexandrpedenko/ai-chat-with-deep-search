@@ -16,6 +16,8 @@ type QueryResult = {
 const toQueryResult = (query: QueryResultSearchResult) =>
   [`### ${query.date} - ${query.title}`, query.url, query.snippet].join("\n\n");
 
+const AMOUNT_OF_CONTEXT_TO_KEEP = 5;
+
 export class SystemContext {
   private step = 0;
   private readonly messages: Message[];
@@ -39,7 +41,7 @@ export class SystemContext {
   }
 
   shouldStop() {
-    return this.step >= 10;
+    return this.step >= AMOUNT_OF_CONTEXT_TO_KEEP;
   }
 
   incrementStep() {

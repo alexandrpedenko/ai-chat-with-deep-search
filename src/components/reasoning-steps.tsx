@@ -6,13 +6,18 @@ import {
   Typography,
   Collapse,
   Stack,
-  Chip
+  Chip,
+  List,
+  ListItem,
+  ListItemText
 } from '@mui/material';
 import { 
   Search as SearchIcon,
   CheckCircle as CheckIcon,
   ExpandMore as ExpandMoreIcon,
-  ExpandLess as ExpandLessIcon
+  ExpandLess as ExpandLessIcon,
+  PlayArrow as ContinueIcon,
+  Lightbulb as PlanIcon
 } from '@mui/icons-material';
 import type { MessageAnnotation } from '~/domain/annotation';
 import { Markdown } from './markdown';
@@ -31,6 +36,132 @@ export const ReasoningSteps = ({ annotations }: ReasoningStepsProps) => {
       <Stack spacing={0.5}>
         {annotations.map((annotation, index) => {
           const isOpen = openStep === index;
+          
+          // Handle query plan annotations
+          if (annotation.type === "QUERY_PLAN") {
+            const queryPlan = annotation.queryPlan;
+            return (
+              <Box key={index}>
+                <Button
+                  onClick={() => setOpenStep(isOpen ? null : index)}
+                  fullWidth
+                  sx={{
+                    justifyContent: 'flex-start',
+                    textAlign: 'left',
+                    py: 1,
+                    px: 2,
+                    bgcolor: isOpen ? 'action.selected' : 'transparent',
+                    color: isOpen ? 'text.primary' : 'text.secondary',
+                    '&:hover': {
+                      bgcolor: isOpen ? 'action.selected' : 'action.hover',
+                    },
+                    textTransform: 'none',
+                    borderRadius: 1,
+                  }}
+                >
+                  <Chip
+                    label={index + 1}
+                    size="small"
+                    sx={{
+                      mr: 1.5,
+                      minWidth: 24,
+                      height: 24,
+                      fontSize: '0.75rem',
+                      fontWeight: 'bold',
+                      bgcolor: isOpen ? 'primary.main' : 'action.disabled',
+                      color: isOpen ? 'primary.contrastText' : 'text.secondary',
+                      '& .MuiChip-label': {
+                        px: 1,
+                      }
+                    }}
+                  />
+                  <Typography 
+                    variant="body2" 
+                    sx={{ 
+                      flexGrow: 1,
+                      fontWeight: isOpen ? 600 : 400,
+                    }}
+                  >
+                    Research Plan
+                  </Typography>
+                  {isOpen ? <ExpandLessIcon fontSize="small" /> : <ExpandMoreIcon fontSize="small" />}
+                </Button>
+                
+                <Collapse in={isOpen}>
+                  <Paper
+                    elevation={0}
+                    sx={{
+                      p: 2,
+                      mt: 0.5,
+                      bgcolor: 'background.default',
+                      borderLeft: 3,
+                      borderColor: 'info.main',
+                      borderRadius: 1,
+                    }}
+                  >
+                    <Box sx={{ mb: 2 }}>
+                      <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 1 }}>
+                        <PlanIcon sx={{ fontSize: 16, color: 'info.main' }} />
+                        <Typography 
+                          variant="caption" 
+                          sx={{ 
+                            fontWeight: 600,
+                            color: 'text.secondary',
+                            textTransform: 'uppercase',
+                            letterSpacing: 0.5,
+                          }}
+                        >
+                          Strategy
+                        </Typography>
+                      </Box>
+                      <Typography 
+                        component="div"
+                        variant="body2" 
+                        sx={{ 
+                          color: 'text.primary',
+                          '& p': { margin: 0 },
+                        }}
+                      >
+                        <Markdown>{queryPlan.plan}</Markdown>
+                      </Typography>
+                    </Box>
+                    
+                    <Box>
+                      <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 1 }}>
+                        <SearchIcon sx={{ fontSize: 16, color: 'info.main' }} />
+                        <Typography 
+                          variant="caption" 
+                          sx={{ 
+                            fontWeight: 600,
+                            color: 'text.secondary',
+                            textTransform: 'uppercase',
+                            letterSpacing: 0.5,
+                          }}
+                        >
+                          Search Queries
+                        </Typography>
+                      </Box>
+                      <List dense sx={{ pl: 2 }}>
+                        {queryPlan.queries.map((query, qIndex) => (
+                          <ListItem key={qIndex} sx={{ px: 0 }}>
+                            <ListItemText 
+                              primary={`${qIndex + 1}. ${query}`}
+                              primaryTypographyProps={{
+                                variant: 'body2',
+                                color: 'text.primary'
+                              }}
+                            />
+                          </ListItem>
+                        ))}
+                      </List>
+                    </Box>
+                  </Paper>
+                </Collapse>
+              </Box>
+            );
+          }
+          
+          // Handle action annotations
           const action = annotation.action;
           
           return (
@@ -98,7 +229,7 @@ export const ReasoningSteps = ({ annotations }: ReasoningStepsProps) => {
                     sx={{ 
                       fontStyle: 'italic',
                       color: 'text.secondary',
-                      mb: action.type === 'search' ? 1.5 : 0,
+                      mb: 1.5,
                       '& p': { margin: 0 },
                     }}
                   >
@@ -142,19 +273,19 @@ export const ReasoningSteps = ({ annotations }: ReasoningStepsProps) => {
                     </Box>
                   )}
                   
-                  {action.type === 'search' && (
+                  {action.type === 'continue' && (
                     <Box 
                       sx={{ 
                         display: 'flex', 
                         alignItems: 'center', 
                         gap: 1,
-                        color: 'text.secondary',
+                        color: 'warning.main',
                         mt: action.feedback ? 1.5 : 0,
                       }}
                     >
-                      <SearchIcon sx={{ fontSize: 16 }} />
+                      <ContinueIcon sx={{ fontSize: 16 }} />
                       <Typography variant="body2">
-                        {action.query}
+                        Continuing research
                       </Typography>
                     </Box>
                   )}

@@ -7,7 +7,7 @@ export const performSearch = async (ctx: SystemContext, query?: string) => {
   }
 
   const results = await searchSerper(
-    { q: query, num: 10 },
+    { q: query, num: 5 },
     undefined,
   );
 

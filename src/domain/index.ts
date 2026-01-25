@@ -9,7 +9,6 @@ export type {
 } from './chat';
 
 export type {
-  SearchAction,
   AnswerAction,
   Action,
   MessageAnnotation,
