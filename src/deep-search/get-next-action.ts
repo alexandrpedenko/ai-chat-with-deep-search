@@ -37,7 +37,7 @@ export const getNextAction = async (
   const result = await generateObject({
     model,
     schema: actionSchema,
-    system: `You are a research evaluator. Your sole task is to determine if enough information has been gathered to answer the user's question.
+    system: `You are a research evaluator. Your task is to determine if enough information has been gathered to provide a helpful answer to the user's question.
 
 You do NOT generate search queries - that's handled by a separate planning system.
 
@@ -47,7 +47,7 @@ Your job is to:
 3. Determine if there are critical information gaps
 4. Decide whether to CONTINUE researching or provide an ANSWER
 
-Be strict in your evaluation - only choose 'answer' if you have comprehensive information to fully address the question.`,
+IMPORTANT: Be practical, not perfectionist. If you have enough information to give a useful, well-informed answer (even if not 100% comprehensive), choose 'answer'. Only choose 'continue' if you're missing critical information that would make the answer misleading or unhelpful.`,
     prompt: `Original Question: ${context.getInitialQuestion()}
 
 Message History:
@@ -58,13 +58,15 @@ ${context.getQueryHistory()}
 
 ${context.getLatestFeedback() ? `Your Previous Evaluation:\n${context.getLatestFeedback()}\n\n` : ''}Based on this context, evaluate whether we have enough information to answer the question:
 
-1. If critical information is still missing, choose 'continue' and explain what gaps remain
-2. If you have comprehensive information to fully answer the question, choose 'answer'
+1. If CRITICAL information is still missing (information without which the answer would be misleading or wrong), choose 'continue' and explain what gaps remain
+2. If you have SUFFICIENT information to provide a helpful, well-informed answer (even if not exhaustive), choose 'answer'
+
+Remember: Useful information is better than perfect information. Don't let perfect be the enemy of good.
 
 In your feedback, be specific about:
 - What information was successfully found
-- What critical information is still missing (if continuing)
-- Why the current information is sufficient to provide a complete answer (if answering)
+- What critical information is still missing (if continuing) - only mention truly critical gaps
+- Why the current information is sufficient to provide a helpful answer (if answering)
 `,
     experimental_telemetry: opts.langfuseTraceId
       ? {

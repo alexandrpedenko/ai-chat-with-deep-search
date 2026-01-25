@@ -58,7 +58,9 @@ export class SystemContext {
 
 
   getQueryHistory(): string {
-    return this.queryHistory
+    // Keep only the most recent 3 queries to manage token usage
+    const recentQueries = this.queryHistory.slice(-3);
+    return recentQueries
       .map((query) =>
         [
           `## Query: "${query.query}"`,
@@ -91,5 +93,9 @@ export class SystemContext {
 
   getLatestFeedback(): string | null {
     return this.latestFeedback;
+  }
+
+  getPreviousQueries(): string[] {
+    return this.queryHistory.map(q => q.query);
   }
 }

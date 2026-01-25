@@ -3,6 +3,45 @@ import { z } from "zod";
 import { model } from "~/model";
 import { SystemContext } from "./system-context";
 
+const AMOUNT_OF_CONTEXT_TO_KEEP = 5;
+
+// Helper functions for building the prompt
+function formatPreviousQueries(queries: string[]): string {
+  if (queries.length === 0) return "";
+
+  const queryList = queries
+    .map((q, i) => `${i + 1}. "${q}"`)
+    .join('\n');
+
+  return `Previous queries already executed (DO NOT repeat these):\n${queryList}\n\n`;
+}
+
+function formatRecentSearchResults(searchHistory: string): string {
+  if (!searchHistory) return "";
+  return `Recent Search Results:\n${searchHistory}\n\n`;
+}
+
+function formatLatestFeedback(feedback: string | null): string {
+  if (!feedback) return "";
+  return `Latest Evaluation Feedback:\n${feedback}\n\n`;
+}
+
+function formatIterationWarning(step: number): string {
+  if (step < 3) return "";
+  return 'WARNING: Limited searches remaining. Be very targeted and efficient.\n\n';
+}
+
+function buildContextSections(context: SystemContext): string {
+  const sections = [
+    formatPreviousQueries(context.getPreviousQueries()),
+    formatRecentSearchResults(context.getQueryHistory()),
+    formatLatestFeedback(context.getLatestFeedback()),
+    formatIterationWarning(context.getStep()),
+  ];
+
+  return sections.join('');
+}
+
 export const queryPlanSchema = z.object({
   plan: z
     .string()
@@ -11,9 +50,10 @@ export const queryPlanSchema = z.object({
     ),
   queries: z
     .array(z.string())
-    .length(3)
+    .min(1)
+    .max(3)
     .describe(
-      "Exactly 3 sequential search queries that progress logically from foundational to specific information. Each query should be specific, focused, written in natural language, and build upon the previous ones.",
+      "Generate 1-3 search queries based on information needs. Use fewer queries (1-2) if you're refining specific details or close to answering. Use more queries (3) for complex questions requiring broad coverage or initial exploration. Each query should be specific, focused, written in natural language, and build upon previous ones.",
     ),
 });
 
@@ -50,13 +90,21 @@ Remember that initial queries can be exploratory - they help establish baseline 
 Message History:
 ${context.getMessageHistory()}
 
-${context.getQueryHistory() ? `Previous Search History:\n${context.getQueryHistory()}\n\n` : ''}${context.getLatestFeedback() ? `Latest Evaluation Feedback:\n${context.getLatestFeedback()}\n\n` : ''}Based on the question and any previous search history, create a research plan and generate exactly 3 search queries that will help answer the question.
+Current iteration: ${context.getStep() + 1}/${AMOUNT_OF_CONTEXT_TO_KEEP}
+Remaining searches after this: ${AMOUNT_OF_CONTEXT_TO_KEEP - context.getStep() - 1}
+
+${buildContextSections(context)}
+Based on the question and context, create a research plan and generate 1-3 search queries:
+
+- First iteration: Use 2-3 broad queries to establish foundational knowledge
+- Middle iterations: Use 2-3 targeted queries to fill specific gaps
+- Later iterations (3+): Use 1-2 highly focused queries to address remaining details
 
 If this is a follow-up search (previous searches exist), your plan should:
 - Address the specific information gaps identified in the feedback
-- Avoid repeating previous searches unless necessary for clarification
-- Build upon what has already been found
-- Target the missing pieces of information
+- NEVER repeat previous queries - build upon what has been found
+- Be more targeted and efficient as iterations increase
+- Use fewer queries if close to having enough information
 
 Your plan should explain your research strategy, and your queries should execute that strategy.`,
     experimental_telemetry: opts.langfuseTraceId
