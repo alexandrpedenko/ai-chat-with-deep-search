@@ -8,12 +8,14 @@ export interface SearchAction {
   query: string;
   title: string;
   reasoning: string;
+  feedback: string;
 }
 
 export interface AnswerAction {
   type: "answer";
   title: string;
   reasoning: string;
+  feedback: string;
 }
 
 export type Action = SearchAction | AnswerAction;

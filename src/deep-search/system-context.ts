@@ -20,6 +20,7 @@ export class SystemContext {
   private step = 0;
   private readonly messages: Message[];
   private queryHistory: QueryResult[] = [];
+  private latestFeedback: string | null = null;
 
 
   constructor(messages: Message[]) {
@@ -80,5 +81,13 @@ export class SystemContext {
       snippet: result.snippet,
       date: result.date,
     }));
+  }
+
+  setLatestFeedback(feedback: string) {
+    this.latestFeedback = feedback;
+  }
+
+  getLatestFeedback(): string | null {
+    return this.latestFeedback;
   }
 }

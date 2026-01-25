@@ -105,6 +105,43 @@ export const ReasoningSteps = ({ annotations }: ReasoningStepsProps) => {
                     <Markdown>{action.reasoning}</Markdown>
                   </Typography>
                   
+                  {action.feedback && (
+                    <Box
+                      sx={{
+                        mt: 1.5,
+                        p: 1.5,
+                        bgcolor: 'action.hover',
+                        borderRadius: 1,
+                        borderLeft: 2,
+                        borderColor: action.type === 'answer' ? 'success.main' : 'warning.main',
+                      }}
+                    >
+                      <Typography 
+                        variant="caption" 
+                        sx={{ 
+                          fontWeight: 600,
+                          color: 'text.secondary',
+                          textTransform: 'uppercase',
+                          letterSpacing: 0.5,
+                          mb: 0.5,
+                          display: 'block',
+                        }}
+                      >
+                        Evaluation Feedback
+                      </Typography>
+                      <Typography 
+                        component="div"
+                        variant="body2" 
+                        sx={{ 
+                          color: 'text.primary',
+                          '& p': { margin: 0 },
+                        }}
+                      >
+                        <Markdown>{action.feedback}</Markdown>
+                      </Typography>
+                    </Box>
+                  )}
+                  
                   {action.type === 'search' && (
                     <Box 
                       sx={{ 
@@ -112,6 +149,7 @@ export const ReasoningSteps = ({ annotations }: ReasoningStepsProps) => {
                         alignItems: 'center', 
                         gap: 1,
                         color: 'text.secondary',
+                        mt: action.feedback ? 1.5 : 0,
                       }}
                     >
                       <SearchIcon sx={{ fontSize: 16 }} />
@@ -128,6 +166,7 @@ export const ReasoningSteps = ({ annotations }: ReasoningStepsProps) => {
                         alignItems: 'center', 
                         gap: 1,
                         color: 'success.main',
+                        mt: action.feedback ? 1.5 : 0,
                       }}
                     >
                       <CheckIcon sx={{ fontSize: 16 }} />

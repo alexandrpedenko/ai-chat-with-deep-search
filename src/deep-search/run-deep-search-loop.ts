@@ -21,6 +21,9 @@ export async function runDeepSearchLoop(
       langfuseTraceId: opts.langfuseTraceId,
     });
 
+    // Store the feedback from the evaluator
+    ctx.setLatestFeedback(nextAction.feedback);
+
     opts.writeMessageAnnotation({
       type: "NEW_ACTION",
       action: nextAction as Action,
