@@ -56,16 +56,16 @@ export const ChatPage = ({ userName, chatId, currentChat }: ChatProps) => {
     initialMessages,
   });
 
-  // Listen for NEW_CHAT_CREATED events and redirect
+  // Listen for NEW_CHAT_CREATED events and redirect after streaming completes
   useEffect(() => {
-    if (!data?.length) return;
+    if (!data?.length || isLoading) return; // Don't redirect while streaming
     
     const lastDataItem = data[data.length - 1];
 
     if (isNewChatCreated(lastDataItem)) {
       router.push(`?id=${lastDataItem.chatId}`);
     }
-  }, [data?.length, router]);
+  }, [data?.length, isLoading, router]);
 
   const isAuthenticated = status === "authenticated" && session?.user;
   const isAuthenticating = status === "loading";

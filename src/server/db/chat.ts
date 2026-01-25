@@ -9,7 +9,7 @@ import { eq, desc, and } from "drizzle-orm";
 export const upsertChat = async (opts: {
   userId: string;
   chatId: string;
-  title: string;
+  title?: string;
   messages: Message[];
 }) => {
   const { userId, chatId, title, messages: messageList } = opts;
@@ -29,14 +29,14 @@ export const upsertChat = async (opts: {
       await tx.insert(chats).values({
         id: chatId,
         userId,
-        title,
+        title: title || "New Chat",
       });
     } else {
       // Update existing chat title and updatedAt
       await tx
         .update(chats)
         .set({
-          title,
+          ...(title ? { title } : {}),
           updatedAt: new Date()
         })
         .where(eq(chats.id, chatId));

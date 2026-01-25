@@ -7,6 +7,7 @@ import { auth } from "~/server/auth";
 import { db } from "~/server/db";
 import { userRequests, users } from "~/server/db/schema";
 import { upsertChat } from "~/server/db/chat";
+import { generateChatTitle } from "~/utils/generate-chat-title";
 import { and, count, eq, gte } from "drizzle-orm";
 import { Langfuse } from "langfuse";
 import { env } from "~/env";
@@ -89,21 +90,26 @@ export async function POST(request: Request) {
       const isNewChat = !chatId;
       const annotations: MessageAnnotation[] = [];
 
+      // Start generating the title in parallel if this is a new chat
+      const titlePromise: Promise<string> = isNewChat
+        ? generateChatTitle(messages)
+        : Promise.resolve("");
+
       const trace = langfuse.trace({
         sessionId: finalChatId,
         name: "chat",
         userId: session.user.id,
       });
 
-      const firstUserMessage = messages.find(msg => msg.role === 'user');
-      const chatTitle = firstUserMessage?.content.slice(0, 50) || "New Chat";
-
-      await upsertChat({
-        userId,
-        chatId: finalChatId,
-        title: chatTitle,
-        messages,
-      });
+      // Save initial chat with temporary title if new
+      if (isNewChat) {
+        await upsertChat({
+          userId,
+          chatId: finalChatId,
+          title: "Generating...",
+          messages,
+        });
+      }
 
       if (isNewChat) {
         dataStream.writeData({
@@ -164,10 +170,13 @@ export async function POST(request: Request) {
               lastMessage.annotations = toJSONValueArray(annotations);
             }
 
+            // Await the title generation
+            const title = await titlePromise;
+
             await upsertChat({
               userId,
               chatId: finalChatId,
-              title: chatTitle,
+              ...(title ? { title } : {}),
               messages: updatedMessages,
             });
             await langfuse.flushAsync();
