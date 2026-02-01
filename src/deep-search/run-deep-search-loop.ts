@@ -7,6 +7,7 @@ import { SystemContext } from "./system-context";
 import { performSearch } from "./perform-search";
 import { answerQuestion } from "./answer-question";
 import { checkIsSafe } from "./check-is-safe";
+import { checkIfQuestionNeedsClarification } from "./check-if-question-needs-clarification";
 import { model } from "~/model";
 
 export async function runDeepSearchLoop(
@@ -36,6 +37,53 @@ Provide a brief, respectful response that:
 3. Does not provide any information that could be used for harmful purposes
 4. Optionally suggests legitimate alternatives if applicable`,
       onFinish: opts.onFinish,
+      experimental_telemetry: opts.langfuseTraceId
+        ? {
+          isEnabled: true,
+          functionId: "safety-refusal",
+          metadata: {
+            langfuseTraceId: opts.langfuseTraceId,
+          },
+        }
+        : undefined,
+    });
+  }
+
+  // Check if the question needs clarification
+  const clarificationResult = await checkIfQuestionNeedsClarification(ctx, {
+    langfuseTraceId: opts.langfuseTraceId,
+  });
+
+  if (clarificationResult.needsClarification) {
+    return streamText({
+      model,
+      system: `You are a clarification agent for a DeepSearch system. Your job is to ask the user for clarification on their question in a friendly, helpful manner.
+
+Guidelines:
+- Be conversational and welcoming
+- Clearly explain what information you need
+- Provide examples or options when helpful
+- Keep your response concise but thorough
+- Make it easy for the user to provide the needed information`,
+      prompt: `Here is the message history:
+
+${ctx.getMessageHistory()}
+
+And here is why the question needs clarification:
+
+${clarificationResult.reason}
+
+Please reply to the user with a clarification request that will help them refine their question.`,
+      onFinish: opts.onFinish,
+      experimental_telemetry: opts.langfuseTraceId
+        ? {
+          isEnabled: true,
+          functionId: "clarification-request",
+          metadata: {
+            langfuseTraceId: opts.langfuseTraceId,
+          },
+        }
+        : undefined,
     });
   }
 
