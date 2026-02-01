@@ -34,6 +34,10 @@ export const getNextAction = async (
   context: SystemContext,
   opts: { langfuseTraceId?: string } = {},
 ) => {
+  const currentStep = context.getStep();
+  const maxSteps = 5;
+  const isLastIteration = currentStep >= maxSteps - 1;
+
   const result = await generateObject({
     model,
     schema: actionSchema,
@@ -47,8 +51,18 @@ Your job is to:
 3. Determine if there are critical information gaps
 4. Decide whether to CONTINUE researching or provide an ANSWER
 
-IMPORTANT: Be practical, not perfectionist. If you have enough information to give a useful, well-informed answer (even if not 100% comprehensive), choose 'answer'. Only choose 'continue' if you're missing critical information that would make the answer misleading or unhelpful.`,
+IMPORTANT: Be practical, not perfectionist. If you have enough information to give a useful, well-informed answer (even if not 100% comprehensive), choose 'answer'. Only choose 'continue' if you're missing critical information that would make the answer misleading or unhelpful.
+
+CRITICAL STOP CONDITIONS - Choose 'answer' immediately if ANY of these apply:
+1. The user's question is inappropriate, harmful, illegal, or unethical AND you will refuse to answer it
+2. You are on the last research iteration (you will be told in the prompt)
+3. Multiple searches have returned no useful information and further searching is unlikely to help
+4. You have sufficient information to provide a helpful answer`,
     prompt: `Original Question: ${context.getInitialQuestion()}
+
+=== ITERATION STATUS ===
+Current iteration: ${currentStep + 1} of ${maxSteps}
+${isLastIteration ? "FINAL ITERATION - You MUST choose 'answer' this time." : ""}
 
 Message History:
 ${context.getMessageHistory()}
@@ -58,15 +72,17 @@ ${context.getQueryHistory()}
 
 ${context.getLatestFeedback() ? `Your Previous Evaluation:\n${context.getLatestFeedback()}\n\n` : ''}Based on this context, evaluate whether we have enough information to answer the question:
 
-1. If CRITICAL information is still missing (information without which the answer would be misleading or wrong), choose 'continue' and explain what gaps remain
-2. If you have SUFFICIENT information to provide a helpful, well-informed answer (even if not exhaustive), choose 'answer'
+STOP CONDITIONS - Choose 'answer' IMMEDIATELY if ANY apply:
+1. This is the FINAL iteration (see status above)
+2. The question is inappropriate/harmful/illegal and you will refuse it
+3. Previous searches returned no useful information and more searching won't help
+4. You have sufficient information for a helpful answer
 
-Remember: Useful information is better than perfect information. Don't let perfect be the enemy of good.
+If continuing (only if NOT final iteration AND missing critical info):
+- Be specific about what critical information gaps remain
+- Explain why additional searching might fill these gaps
 
-In your feedback, be specific about:
-- What information was successfully found
-- What critical information is still missing (if continuing) - only mention truly critical gaps
-- Why the current information is sufficient to provide a helpful answer (if answering)
+Remember: On iteration ${currentStep + 1}/${maxSteps}, bias toward answering. Useful information beats perfect information.
 `,
     experimental_telemetry: opts.langfuseTraceId
       ? {
