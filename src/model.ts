@@ -10,3 +10,7 @@ export const model = openai("gpt-4o-mini");
 // export const model = openai("gpt-4");
 
 export const factualityModel = openai("gpt-4o-mini");
+
+// Guardrail model for content safety classification
+// Fast and cheap for blocking operations
+export const guardrailModel = openai("gpt-4o-mini");
