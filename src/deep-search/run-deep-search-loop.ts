@@ -67,7 +67,7 @@ Guidelines:
 - Make it easy for the user to provide the needed information`,
       prompt: `Here is the message history:
 
-${ctx.getMessageHistory()}
+${ctx.getRelevantHistory('clarification')}
 
 And here is why the question needs clarification:
 

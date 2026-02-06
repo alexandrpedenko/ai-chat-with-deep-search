@@ -40,6 +40,63 @@ export class SystemContext {
       .join("\n\n");
   }
 
+  /**
+   * Get relevant message history based on the specific purpose/context.
+   * This reduces token usage by only including necessary messages.
+   */
+  getRelevantHistory(purpose: 'safety' | 'clarification' | 'research' | 'answer'): string {
+    switch (purpose) {
+      case 'safety':
+      case 'clarification':
+        // Only need recent context for safety/clarification checks
+        return this.getLastNMessages(3);
+
+      case 'research':
+        // Need original question context + recent clarifications
+        return this.getOriginalQuestionWithContext();
+
+      case 'answer':
+        // Need full context for comprehensive answer
+        return this.getMessageHistory();
+    }
+  }
+
+  /**
+   * Get the last N messages from the conversation.
+   * Useful for contexts that only need recent history.
+   */
+  private getLastNMessages(n: number): string {
+    const recentMessages = this.messages.slice(-n);
+    return recentMessages
+      .map((message) => {
+        const role = message.role === "user" ? "User" : "Assistant";
+        const text = getMessageText(message);
+        return `<${role}>${text}</${role}>`;
+      })
+      .join("\n\n");
+  }
+
+  /**
+   * Get original question with recent context.
+   * Useful for research planning where we need to know the original intent
+   * but also consider any clarifications.
+   */
+  private getOriginalQuestionWithContext(): string {
+    if (this.messages.length <= 4) {
+      // If conversation is short, return everything
+      return this.getMessageHistory();
+    }
+
+    // Get first user message (original question)
+    const firstUserMsg = this.messages.find(msg => msg.role === "user");
+    const firstUserText = firstUserMsg ? getMessageText(firstUserMsg) : "";
+
+    // Get last 2 messages for recent context
+    const recentContext = this.getLastNMessages(2);
+
+    return `Original Question:\n<User>${firstUserText}</User>\n\nRecent Context:\n${recentContext}`;
+  }
+
   shouldStop() {
     return this.step >= AMOUNT_OF_CONTEXT_TO_KEEP;
   }
@@ -71,6 +128,17 @@ export class SystemContext {
   }
 
   getInitialQuestion(): string {
+    // Get the FIRST user message as the original question
+    // (subsequent user messages might be clarifications)
+    const firstUserMessage = this.messages.find(msg => msg.role === "user");
+    return firstUserMessage ? getMessageText(firstUserMessage) : "";
+  }
+
+  /**
+   * Get the most recent user message.
+   * Useful when you need the latest user input rather than the original question.
+   */
+  getLatestUserMessage(): string {
     const lastUserMessage = this.messages
       .filter(msg => msg.role === "user")
       .pop();

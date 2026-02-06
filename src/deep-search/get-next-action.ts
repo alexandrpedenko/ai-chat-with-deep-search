@@ -64,8 +64,8 @@ CRITICAL STOP CONDITIONS - Choose 'answer' immediately if ANY of these apply:
 Current iteration: ${currentStep + 1} of ${maxSteps}
 ${isLastIteration ? "FINAL ITERATION - You MUST choose 'answer' this time." : ""}
 
-Message History:
-${context.getMessageHistory()}
+Conversation Context:
+${context.getRelevantHistory('research')}
 
 Search History:
 ${context.getQueryHistory()}

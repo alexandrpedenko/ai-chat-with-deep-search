@@ -27,7 +27,7 @@ When answering:
 
 ${isFinal ? "Note: We may not have all the information needed to answer the question completely. Please provide your best attempt at an answer based on the available information." : ""}`,
     prompt: `Message History:
-${ctx.getMessageHistory()}
+${ctx.getRelevantHistory('answer')}
 
 Based on the following context, please answer the question:
 

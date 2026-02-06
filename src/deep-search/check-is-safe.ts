@@ -4,7 +4,8 @@ import { guardrailModel } from "~/model";
 import { SystemContext } from "./system-context";
 
 export const checkIsSafe = async (ctx: SystemContext) => {
-  const messageHistory: string = ctx.getMessageHistory();
+  // Only need recent context for safety checks
+  const messageHistory: string = ctx.getRelevantHistory('safety');
 
   const { object } = await generateObject({
     model: guardrailModel,

@@ -7,7 +7,8 @@ export const checkIfQuestionNeedsClarification = async (
   ctx: SystemContext,
   opts: { langfuseTraceId?: string } = {},
 ) => {
-  const messageHistory = ctx.getMessageHistory();
+  // Only need recent context for clarification checks
+  const messageHistory = ctx.getRelevantHistory('clarification');
 
   const { object } = await generateObject({
     model,

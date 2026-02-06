@@ -87,8 +87,8 @@ Finally, translate this plan into exactly 3 sequential search queries that:
 Remember that initial queries can be exploratory - they help establish baseline information or verify assumptions before proceeding to more targeted searches. Each query should serve a specific purpose in your overall research plan.`,
     prompt: `Original Question: ${context.getInitialQuestion()}
 
-Message History:
-${context.getMessageHistory()}
+Conversation Context:
+${context.getRelevantHistory('research')}
 
 Current iteration: ${context.getStep() + 1}/${AMOUNT_OF_CONTEXT_TO_KEEP}
 Remaining searches after this: ${AMOUNT_OF_CONTEXT_TO_KEEP - context.getStep() - 1}
